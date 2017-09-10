@@ -10,7 +10,10 @@ var backendConnector = {
                 host: this.host,
                 method: method,
                 path: path,
-                headers: {'Content-Type': 'application/json'}
+                headers: {
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'discord QA bot (node.js)'
+                }
             }, (response) => {
                 var responseData = ''
                 response.on('data', (segment) => responseData += segment)
@@ -18,7 +21,6 @@ var backendConnector = {
                     () => routeResponse(JSON.parse(responseData))
                 )
             })
-
             if (json) request.write(JSON.stringify(json))
             request.end()
         })
@@ -50,8 +52,9 @@ class MyClient {
         })
 
         client.on('message', (message) => {
+            var uid = message.author.id
             console.log('%s: "%s"', message.author.username, message.content)
-            if (message.author.id == this.client.user.id) ;
+            if (uid == this.client.user.id) ;
             else if (message.content.match('/')) this.routeCommand(message)
             else {
                 this.answerQuestion(message)
@@ -64,12 +67,14 @@ class MyClient {
     }
     answerQuestion(message) {
         var backendConnector = this.backendConnector
-        var user = message.author
+        var uid = message.author.id
         return backendConnector.answerQuestion({
-            user: user.id,
-            id: backendConnector.userPrevQuestion[user.id],
+            user: uid,
+            id: backendConnector.userPrevQuestion[uid],
             answer: message.content.charAt(0)
-        }).then((correct) => message.reply(correct))
+        }).then((correct) => {
+            message.reply(correct)
+        })
     }
     routeCommand(message) {
         if (message.content.match('start')) {
@@ -86,13 +91,15 @@ class MyClient {
         }
     }
     responseQuestion(message) {
-        var backendConnector = this.backendConnector
-        backendConnector.getQuestion(message.author.id)
+        this.backendConnector
+            .getQuestion(message.author.id)
             .then((question) => {
                 message.reply(question.question)
-                question.option.forEach((text, index) => {
-                    message.reply(' ' + String(index) + ': ' + text)
-                })
+                message.reply(
+                    question.option.map(
+                        (text, index) => index + '. ' + text
+                    ).join('\n')
+                )
             })
     }
 }
