@@ -2,9 +2,12 @@
 var Discord = require('discord.js')
 var http = require('http')
 
-var backendConnector = {
-    host: 'quizbe-locoescp.rhcloud.com',
-    request: function (method, path, json) {
+class BackendConnector {
+    constructor(host) {
+        this.host = host
+        this.userPrevQuestion = {}
+    }
+    request(method, path, json) {
         return new Promise((routeResponse) => {
             var request = http.request({
                 host: this.host,
@@ -24,21 +27,20 @@ var backendConnector = {
             if (json) request.write(JSON.stringify(json))
             request.end()
         })
-    },
-    regist: function (user) {
+    }
+    regist(user) {
         return this.request('POST', '/user.json', user)
-    },
-    getQuestion: function (uid) {
+    }
+    getQuestion(uid) {
         return this.request('GET', '/question.json?user=' + uid)
             .then((question) => {
                 this.userPrevQuestion[uid] = question.id
                 return question
             })
-    },
-    answerQuestion: function (answer) {
+    }
+    answerQuestion(answer) {
         return this.request('POST', '/answer.json', answer)
-    },
-    userPrevQuestion: {}
+    }
 }
 
 class MyClient {
@@ -106,4 +108,9 @@ class MyClient {
 
 exports.MyClient = MyClient
 exports.Discord = Discord
-exports.backendConnector = backendConnector
+exports.BackendConnector = BackendConnector
+exports.run = function (host, token) {
+    var backendConnector = new this.BackendConnector(host)
+    var myClient = new this.MyClient(token, backendConnector)
+    return myClient
+}
