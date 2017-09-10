@@ -7,7 +7,7 @@
 ## 執行
 
 ```javascript
-var qalib = require('./qa-client)
+var qalib = require('./qa-client')
 var token = 'your chat bot token'
 
 var host = 'quiz backend server url' // same interface as 
@@ -16,7 +16,7 @@ var host = 'quiz backend server url' // same interface as
 var myClient = qalib.run(host, token)
 ```
 
-## chatbot 操作
+## chatbot 管理
 由於 discord 的限制，不能直接將 bot 加為好友。（應該吧）
 需先與該 bot 在同一伺服器，就能與之對話。
 
@@ -32,4 +32,10 @@ var myClient = qalib.run(host, token)
 在私人聊天中下指令不需再加 `@escho#1145` 。
 
 在與 bot 一對一私人訊息中可以直接用 `/somecommand` 的格式下指令；
-在公頻中需要在指令前標注 `@escho#1145 /somecommand` bot才會回應。
+在公頻中需要在指令前標注 `@escho#1145 /somecommand` bot 才會回應。
+
+## chatbot 指令
+持續增加中……
+
+  - 直接輸入 0-3 回答
+  - `/start` 開始答題
