@@ -54,50 +54,64 @@ class MyClient {
         })
 
         client.on('message', (message) => {
-            var uid = message.author.id
             console.log('%s: "%s"', message.author.username, message.content)
-            if (uid == this.client.user.id) ;
-            else if (message.content.match('/')) this.routeCommand(message)
-            else {
-                this.answerQuestion(message)
-                    .then(() => this.responseQuestion(message))
+            if (this.isSelf(message)) ;
+            else if (this.isMention(message)) {
+                this.routeCommand(message)
+            }
+            else if (message.channel.type == 'dm') {
+                if (this.isAnswer(message)) {
+                    this.answerQuestion(message)
+                        .then(() => this.responseQuestion(message.author))
+                }
+                else this.routeCommand(message)
             }
         })
 
         this.then = promiseClient.then.bind(promiseClient)
         client.login(token)
     }
+    isMention(message) {
+        return message.mentions.users.has(this.client.user.id)
+    }
+    isSelf(message) {
+        return message.author.id == this.client.user.id
+    }
+    isAnswer(message) {
+        var answer = Number(message)
+        return answer >= 0 && answer <= 3
+    }
     answerQuestion(message) {
         var backendConnector = this.backendConnector
-        var uid = message.author.id
+        var user = message.author
         return backendConnector.answerQuestion({
-            user: uid,
-            id: backendConnector.userPrevQuestion[uid],
+            user: user.id,
+            id: backendConnector.userPrevQuestion[user.id],
             answer: message.content.charAt(0)
         }).then((correct) => {
-            message.reply(correct)
+            message.author.send(correct)
         })
     }
     routeCommand(message) {
-        if (message.content.match('start')) {
+        if (message.content.match('/start')) {
             var user = message.author
-            backendConnector.regist({
+            this.backendConnector.regist({
                 user: user.id,
                 nickname: user.username,
                 platform: 'discord'
             }).then(
-                () => this.responseQuestion(message)
+                () => this.responseQuestion(user)
             ).catch(error => {
                 console.error(error)
             })
         }
     }
-    responseQuestion(message) {
+    responseQuestion(user) {
         this.backendConnector
-            .getQuestion(message.author.id)
+            .getQuestion(user.id)
             .then((question) => {
-                message.reply(question.question)
-                message.reply(
+                user.send(question.question)
+                user.send(
                     question.option.map(
                         (text, index) => index + '. ' + text
                     ).join('\n')
