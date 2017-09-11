@@ -115,12 +115,12 @@ class MyClient {
                     title: 'Q ' + question.id,
                     description: question.question
                 })
-                rich.addBlankField()
+                rich.setColor('RANDOM')
                 var inline = true
                 question.option.forEach(
                     (text, index) => rich.addField(index, text, inline)
                 )
-                user.send(rich)
+                return user.send(rich)
             })
     }
 }
