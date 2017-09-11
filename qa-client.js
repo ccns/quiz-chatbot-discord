@@ -8,7 +8,7 @@ class BackendConnector {
         this.userPrevQuestion = {}
     }
     request(method, path, json) {
-        return new Promise((routeResponse) => {
+        return new Promise((routeResponse, routeError) => {
             var request = http.request({
                 host: this.host,
                 method: method,
@@ -20,9 +20,13 @@ class BackendConnector {
             }, (response) => {
                 var responseData = ''
                 response.on('data', (segment) => responseData += segment)
-                response.on('end',
-                    () => routeResponse(JSON.parse(responseData))
-                )
+                response.on('end', () => {
+                    var json = JSON.parse(responseData)
+                    if (response.statusCode == 200) {
+                        routeResponse(json)
+                    }
+                    else routeError(json)
+                })
             })
             if (json) request.write(JSON.stringify(json))
             request.end()
@@ -42,7 +46,16 @@ class BackendConnector {
         return this.request('GET', `/user.json?user=${uid}`)
     }
     answerQuestion(answer) {
-        return this.request('POST', '/answer.json', answer)
+        var prevQuestion = this.userPrevQuestion[answer.user]
+        if (!prevQuestion) {
+            return Promise.reject(
+                new Error('you have no question to answer now')
+            )
+        }
+        else {
+            if (!answer.id) answer.id = prevQuestion
+            return this.request('POST', '/answer.json', answer)
+        }
     }
 }
 
@@ -57,7 +70,6 @@ class MyClient {
         })
 
         client.on('message', (message) => {
-            console.log('%s: "%s"', message.author.username, message.content)
             if (this.isSelf(message)) ;
             else if (this.isMention(message)) {
                 this.routeCommand(message)
@@ -66,6 +78,9 @@ class MyClient {
                 if (this.isAnswer(message)) {
                     this.answerQuestion(message)
                         .then(() => this.responseQuestion(message.author))
+                        .catch((answerError) =>
+                            message.reply(answerError.message)
+                        )
                 }
                 else this.routeCommand(message)
             }
@@ -89,7 +104,6 @@ class MyClient {
         var user = message.author
         return backendConnector.answerQuestion({
             user: user.id,
-            id: backendConnector.userPrevQuestion[user.id],
             answer: message.content.charAt(0)
         }).then((correct) => {
             if (correct) message.react('👍') // fb like sign emoji
@@ -103,13 +117,13 @@ class MyClient {
                 user: user.id,
                 nickname: user.username,
                 platform: 'discord'
-            }).then(
+            }).catch(
+                (registError) => message.reply(registError.message)
+            ).then(
                 () => this.responseQuestion(user)
             ).then(
                 () => message.reply('quiz already start in your private chat')
-            ).catch(error => {
-                console.error(error)
-            })
+            )
         }
         else if (message.content.match('/status')) {
             this.backendConnector
@@ -128,7 +142,9 @@ class MyClient {
                     rich.addField('remainder', remainder)
                         
                     message.channel.send(rich)
-                }).catch((error) => console.error(error))
+                }).catch((userError) => {
+                    message.reply(userError.message)
+                })
         }
     }
     responseQuestion(user) {
@@ -145,6 +161,8 @@ class MyClient {
                     (text, index) => rich.addField(index, text, inline)
                 )
                 return user.send(rich)
+            }).catch((questionError) => {
+                this.sendError(questionError.message)
             })
     }
 }
