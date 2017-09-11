@@ -10,8 +10,8 @@
 var qalib = require('./qa-client')
 var token = 'your chat bot token'
 
-var host = 'quiz backend server url' // same interface as 
-                                     // </ccns/quiz-chatbot-server>
+var host = 'quiz backend server url'
+// same interface as </ccns/quiz-chatbot-server>
 
 var myClient = qalib.run(host, token)
 ```
@@ -39,3 +39,4 @@ var myClient = qalib.run(host, token)
 
   - 直接輸入 0-3 回答
   - `/start` 開始答題
+  - `/status` 看自己的答題狀況
