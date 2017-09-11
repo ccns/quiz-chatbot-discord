@@ -4,6 +4,15 @@
 於 discord 平台上的聊天機器人，
 用 discord.js 寫成。
 
+> 不要問我為什麼沒有按鈕，discord 還沒有按鈕 ui。
+> 聽說有人用 emoji 模擬按鈕，
+> 就像按讚是 A，按大心是 B 之類，
+> 不過我覺得體驗沒有很好就是，
+> 而且手機版的 emoji 很難按，所以就用鍵盤了。
+>
+> * <https://feedback.discordapp.com/forums/326712-discord-dream-land/suggestions/13815273-in-chat-buttons-for-bots>
+> * <https://www.reddit.com/r/discordapp/comments/5cfas9/discordjs_bot_button/>
+
 ## 執行
 
 ```javascript
