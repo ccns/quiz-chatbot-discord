@@ -145,8 +145,8 @@ class MyClient {
                     })
                     rich.setColor('GREEN')
 
-                    var remainder =
-                        user.questionStatus.filter((c) => c == 0).length
+                    var remainder = user.questionStatus
+                        .reduce((s, c) => c == 0 ? s+1 : s, 0)
                     rich.addField('point', user.point)
                     rich.addField('order', `${user.order} / ${user.total}`)
                     rich.addField('remainder', remainder)
