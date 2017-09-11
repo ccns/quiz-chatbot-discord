@@ -89,7 +89,8 @@ class MyClient {
             id: backendConnector.userPrevQuestion[user.id],
             answer: message.content.charAt(0)
         }).then((correct) => {
-            message.author.send(correct)
+            if (correct) message.react('👍')
+            else message.react('👎')
         })
     }
     routeCommand(message) {
