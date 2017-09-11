@@ -32,11 +32,14 @@ class BackendConnector {
         return this.request('POST', '/user.json', user)
     }
     getQuestion(uid) {
-        return this.request('GET', '/question.json?user=' + uid)
+        return this.request('GET', `/question.json?user=${uid}`)
             .then((question) => {
                 this.userPrevQuestion[uid] = question.id
                 return question
             })
+    }
+    getStatus(uid) {
+        return this.request('GET', `/user.json?user=${uid}`)
     }
     answerQuestion(answer) {
         return this.request('POST', '/answer.json', answer)
@@ -102,9 +105,30 @@ class MyClient {
                 platform: 'discord'
             }).then(
                 () => this.responseQuestion(user)
+            ).then(
+                () => message.reply('quiz already start in your private chat')
             ).catch(error => {
                 console.error(error)
             })
+        }
+        else if (message.content.match('/status')) {
+            this.backendConnector
+                .getStatus(message.author.id)
+                .then((user) => {
+                    var rich = new Discord.RichEmbed({
+                        title: `status`,
+                        description: `${user.nickname} quiz status`
+                    })
+                    rich.setColor('GREEN')
+
+                    var remainder =
+                        user.questionStatus.filter((c) => c == 0).length
+                    rich.addField('point', user.point)
+                    rich.addField('order', `${user.order} / ${user.total}`)
+                    rich.addField('remainder', remainder)
+                        
+                    message.channel.send(rich)
+                }).catch((error) => console.error(error))
         }
     }
     responseQuestion(user) {
