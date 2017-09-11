@@ -89,8 +89,8 @@ class MyClient {
             id: backendConnector.userPrevQuestion[user.id],
             answer: message.content.charAt(0)
         }).then((correct) => {
-            if (correct) message.react('👍')
-            else message.react('👎')
+            if (correct) message.react('👍') // fb like sign emoji
+            else message.react('👎') // dislike
         })
     }
     routeCommand(message) {
@@ -111,12 +111,16 @@ class MyClient {
         this.backendConnector
             .getQuestion(user.id)
             .then((question) => {
-                user.send(question.question)
-                user.send(
-                    question.option.map(
-                        (text, index) => index + '. ' + text
-                    ).join('\n')
+                var rich = new Discord.RichEmbed({
+                    title: 'Q ' + question.id,
+                    description: question.question
+                })
+                rich.addBlankField()
+                var inline = true
+                question.option.forEach(
+                    (text, index) => rich.addField(index, text, inline)
                 )
+                user.send(rich)
             })
     }
 }
