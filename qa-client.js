@@ -60,10 +60,11 @@ class BackendConnector {
 }
 
 class MyClient {
-    constructor(token, backendConnector) {
+    constructor(token, backendConnector, responseBase) {
         var client = new Discord.Client()
         this.client = client
         this.backendConnector = backendConnector
+        this.responseBase = responseBase
         
         var promiseClient = new Promise((afterLogin) => {
             client.on('ready', afterLogin)
@@ -96,7 +97,7 @@ class MyClient {
         return message.author.id == this.client.user.id
     }
     isAnswer(message) {
-        var answer = Number(message)
+        var answer = Number(message.content.charAt(0))
         return answer >= 0 && answer <= 3
     }
     answerQuestion(message) {
@@ -106,8 +107,17 @@ class MyClient {
             user: user.id,
             answer: message.content.charAt(0)
         }).then((correct) => {
-            if (correct) message.react('👍') // fb like sign emoji
-            else message.react('👎') // dislike
+            function responseCorrect(emoji, responseBase) {
+                var i = Math.floor(responseBase.length * Math.random())
+                return Promise.all([
+                    message.react(emoji),
+                    message.reply(responseBase[i])
+                ])
+            }
+            var base = this.responseBase
+            return correct ?
+                responseCorrect(base.emoji.right, base.right) :
+                responseCorrect(base.emoji.wrong, base.wrong)
         })
     }
     routeCommand(message) {
@@ -170,8 +180,8 @@ class MyClient {
 exports.MyClient = MyClient
 exports.Discord = Discord
 exports.BackendConnector = BackendConnector
-exports.run = function (host, token) {
+exports.run = function (host, token, responseDatabase) {
     var backendConnector = new this.BackendConnector(host)
-    var myClient = new this.MyClient(token, backendConnector)
+    var myClient = new this.MyClient(token, backendConnector, responseDatabase)
     return myClient
 }
