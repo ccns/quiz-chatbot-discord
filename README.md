@@ -42,16 +42,17 @@ var myClient = qalib.run(host, token, responseDatabase)
 與 bot 的答題在私人聊天中進行，
 在私人聊天中下指令不需再加 `@escho#1145` 。
 
-在與 bot 一對一私人訊息中可以直接用 `/somecommand` 的格式下指令；
-在公頻中需要在指令前標注 `@escho#1145 /somecommand` bot 才會回應。
-
 
 ## chatbot 指令
+
+在與 bot 一對一私人訊息中可以直接用 `/somecommand` 的格式下指令；
+在公頻中需要在指令前標注 `@escho#1145 /somecommand` bot 才會回應。
 
   - 直接回覆以 0-3 開頭的訊息回答
   - `/start` 開始答題
   - `/status` 看自己的答題狀況
+  - `/help` 指令說明
+  - `/statistic` 排行榜
 
-答對會對你的訊息按讚（大拇指），
-答錯則是向下的大拇指；
-然後回覆事先錄製的對白，再送出下一題。
+答對會對你的訊息按讚（大拇指），答錯則是向下的大拇指；
+然後回覆事先錄製的對白，延時一秒後送出下一題。

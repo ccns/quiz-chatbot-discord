@@ -2,6 +2,12 @@
 var Discord = require('discord.js')
 var http = require('http')
 
+function sleep(minisecond) {
+    return new Promise((wakeup) => {
+        setTimeout(wakeup, minisecond)
+    })
+}
+
 class BackendConnector {
     constructor(host) {
         this.host = host
@@ -78,6 +84,7 @@ class MyClient {
             else if (message.channel.type == 'dm') {
                 if (this.isAnswer(message)) {
                     this.answerQuestion(message)
+                        .then(() => sleep(1000))
                         .then(() => this.responseQuestion(message.author))
                         .catch((answerError) =>
                             message.reply(answerError.message)
@@ -121,9 +128,20 @@ class MyClient {
         })
     }
     routeCommand(message) {
-        if (message.content.match('/start')) {
+        function commandIs(command) {
+            return Boolean((message.content.match(`/${command}`)))
+        }
+        var responseBase = this.responseBase
+        if (commandIs('help')) {
+            var rich = new Discord.RichEmbed(responseBase.command.help)
+            rich.setColor(responseBase.command.color)
+            return message.channel.send(rich)
+        } else if (commandIs('statistic')) {
+            return message.reply(responseBase.command.statistic)
+        }
+        else if (commandIs('start')) {
             var user = message.author
-            this.backendConnector.regist({
+            return this.backendConnector.regist({
                 user: user.id,
                 nickname: user.username,
                 platform: 'discord'
@@ -135,15 +153,15 @@ class MyClient {
                 () => message.reply('quiz already start in your private chat')
             )
         }
-        else if (message.content.match('/status')) {
-            this.backendConnector
+        else if (commandIs('status')) {
+            return this.backendConnector
                 .getStatus(message.author.id)
                 .then((user) => {
                     var rich = new Discord.RichEmbed({
                         title: `status`,
                         description: `${user.nickname} quiz status`
                     })
-                    rich.setColor('GREEN')
+                    rich.setColor(responseBase.command.color)
 
                     var remainder = user.questionStatus
                         .reduce((s, c) => c == 0 ? s+1 : s, 0)
@@ -155,6 +173,9 @@ class MyClient {
                 }).catch((userError) => {
                     message.reply(userError.message)
                 })
+        }
+        else {
+            return Promise.reject(new Error('no this command  QQ'))
         }
     }
     responseQuestion(user) {

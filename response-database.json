@@ -1,4 +1,30 @@
 {
+    "command": {
+        "color": "GREEN",
+        "statistic": "see: <http://leaderboard.ccns.ncku.edu.tw>",
+        "help": {
+            "title": "help",
+            "description": "this is quiz chat bot escho!\n\n all command start with `/`. when use in group channel, need add prefix `@escho#1145`. for example, you can show your status to other in **qa-quiz** by send `@escho#1145 /status` in qa-quiz channel.",
+            "fields": [
+                {
+                    "name": "/help",
+                    "value": "show this help"
+                },
+                {
+                    "name": "/start",
+                    "value": "try regist and start QA quiz in private channel"
+                },
+                {
+                    "name": "/status",
+                    "value": "show your quiz status"
+                },
+                {
+                    "name": "/statistic",
+                    "value": "show all user status"
+                }
+            ]
+        }
+    },
     "emoji": {"right": "👍", "wrong": "👎"},
     "right": [
         "すごーい!",
