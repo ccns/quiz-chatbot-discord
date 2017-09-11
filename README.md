@@ -17,12 +17,14 @@
 
 ```javascript
 var qalib = require('./qa-client')
+var fs = require('fs')
 var token = 'your chat bot token'
+var responseDatabase = JSON.parse(fs.readFileSync('./response-database.json'))
 
 var host = 'quiz backend server url'
 // same interface as </ccns/quiz-chatbot-server>
 
-var myClient = qalib.run(host, token)
+var myClient = qalib.run(host, token, responseDatabase)
 ```
 
 ## chatbot 管理
@@ -51,5 +53,5 @@ var myClient = qalib.run(host, token)
   - `/status` 看自己的答題狀況
 
 答對會對你的訊息按讚（大拇指），
-答錯則是向下的大拇指。
-
+答錯則是向下的大拇指；
+然後回覆事先錄製的對白，再送出下一題。
