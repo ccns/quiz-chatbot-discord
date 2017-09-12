@@ -175,7 +175,7 @@ class MyClient {
                 })
         }
         else {
-            return Promise.reject(new Error('no this command  QQ'))
+            return Promise.reject(new Error('no this command  TT'))
         }
     }
     responseQuestion(user) {
@@ -183,17 +183,19 @@ class MyClient {
             .getQuestion(user.id)
             .then((question) => {
                 var rich = new Discord.RichEmbed({
-                    title: 'Q ' + question.id,
+                    title: `Q ${question.id}`,
                     description: question.question
                 })
                 rich.setColor('RANDOM')
-                var inline = true
+                rich.setAuthor(question.author)
+                if (question.hint) rich.setFooter(question.hint)
+                
                 question.option.forEach(
-                    (text, index) => rich.addField(index, text, inline)
+                    (text, index) => rich.addField(index, text)
                 )
                 return user.send(rich)
             }).catch((questionError) => {
-                this.sendError(questionError.message)
+                user.send(questionError.message)
             })
     }
 }
