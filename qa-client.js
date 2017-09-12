@@ -53,7 +53,7 @@ class BackendConnector {
     }
     answerQuestion(answer) {
         var prevQuestion = this.userPrevQuestion[answer.user]
-        if (!prevQuestion) {
+        if (prevQuestion == undefined) {
             return Promise.reject(
                 new Error('you have no question to answer now')
             )
