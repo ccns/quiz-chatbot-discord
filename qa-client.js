@@ -15,25 +15,28 @@ class BackendConnector {
     }
     request(method, path, json) {
         return new Promise((routeResponse, routeError) => {
-            var request = http.request({
-                host: this.host,
-                method: method,
-                path: path,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'discord QA bot (node.js)'
-                }
-            }, (response) => {
-                var responseData = ''
-                response.on('data', (segment) => responseData += segment)
-                response.on('end', () => {
-                    var json = JSON.parse(responseData)
-                    if (response.statusCode == 200) {
-                        routeResponse(json)
+            var request = http.request(
+                {
+                    host: this.host,
+                    method: method,
+                    path: path,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'discord QA bot (node.js)'
                     }
-                    else routeError(json)
-                })
-            })
+                },
+                (response) => {
+                    var responseData = ''
+                    response.on('data', (segment) => responseData += segment)
+                    response.on('end', () => {
+                        var json = JSON.parse(responseData)
+                        if (response.statusCode == 200) {
+                            routeResponse(json)
+                        }
+                        else routeError(json)
+                    })
+                }
+            )
             if (json) request.write(JSON.stringify(json))
             request.end()
         })
