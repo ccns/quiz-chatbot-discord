@@ -107,15 +107,23 @@ class MyClient {
         return message.author.id == this.client.user.id
     }
     isAnswer(message) {
-        var answer = Number(message.content.charAt(0))
-        return answer >= 0 && answer <= 3
+        return /^[0-3A-Da-d]/.test(message.content)
     }
     answerQuestion(message) {
         var backendConnector = this.backendConnector
         var user = message.author
+        function parseAnswer(message) {
+            var answer = message.content.charAt(0)
+            switch (answer) {
+            case '0': case 'a': case 'A': return 0
+            case '1': case 'b': case 'B': return 1
+            case '2': case 'c': case 'C': return 2
+            case '3': case 'd': case 'D': return 3
+            }
+        }
         return backendConnector.answerQuestion({
             user: user.id,
-            answer: message.content.charAt(0)
+            answer: parseAnswer(message)
         }).then((correct) => {
             function responseCorrect(emoji, responseBase) {
                 var i = Math.floor(responseBase.length * Math.random())
