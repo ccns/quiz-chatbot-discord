@@ -156,8 +156,13 @@ class MyClient {
                 user: user.id,
                 nickname: user.username,
                 platform: 'discord'
-            }).catch(
-                (registError) => message.reply(registError.message)
+            }).catch((registError) => message
+                .reply(registError.message)
+                .then(() => this.backendConnector.getStatus(user.id))
+            ).then(
+                (userJson) => user.send(
+                    this.richifyStatus(userJson)
+                )
             ).then(
                 () => this.responseQuestion(user)
             ).then(
@@ -167,27 +172,30 @@ class MyClient {
         else if (commandIs('status')) {
             return this.backendConnector
                 .getStatus(message.author.id)
-                .then((user) => {
-                    var rich = new Discord.RichEmbed({
-                        title: `status`,
-                        description: `${user.nickname} quiz status`
-                    })
-                    rich.setColor(responseBase.command.color)
-
-                    var remainder = user.questionStatus
-                        .reduce((s, c) => c == 0 ? s+1 : s, 0)
-                    rich.addField('point', user.point)
-                    rich.addField('order', `${user.order} / ${user.total}`)
-                    rich.addField('remainder', remainder)
-                        
-                    message.channel.send(rich)
-                }).catch((userError) => {
+                .then((user) => message.channel.send(
+                    this.richifyStatus(user)
+                )).catch((userError) => {
                     message.reply(userError.message)
                 })
         }
         else {
             return Promise.reject(new Error('no this command  TT'))
         }
+    }
+    richifyStatus(user) {
+        var responseBase = this.responseBase
+        var rich = new Discord.RichEmbed({
+            title: 'status',
+            description: `${user.nickname} quiz status`
+        })
+        rich.setColor(responseBase.command.color)
+
+        var remainder = user.questionStatus
+            .reduce((s, c) => c == 0 ? s+1 : s, 0)
+        rich.addField('point', user.point)
+        rich.addField('order', `${user.order} / ${user.total}`)
+        rich.addField('remainder', remainder)
+        return rich
     }
     responseQuestion(user) {
         this.backendConnector
