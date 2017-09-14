@@ -48,7 +48,7 @@ var myClient = qalib.run(host, token, responseDatabase)
 在與 bot 一對一私人訊息中可以直接用 `/somecommand` 的格式下指令；
 在公頻中需要在指令前標注 `@escho#1145 /somecommand` bot 才會回應。
 
-  - 直接回覆以 0-3 開頭的訊息回答
+  - 直接回覆以 0-3 a-d A-D 開頭的訊息回答
   - `/start` 開始答題
   - `/status` 看自己的答題狀況
   - `/help` 指令說明
