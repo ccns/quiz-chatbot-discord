@@ -12,6 +12,10 @@ class BackendConnector {
     constructor(host) {
         this.host = host
         this.userPrevQuestion = {}
+        this.userMap = {}
+    }
+    alias(discordUid, customUid) {
+        this.userMap[discordUid] = customUid
     }
     request(method, path, json) {
         return new Promise((routeResponse, routeError) => {
@@ -42,16 +46,21 @@ class BackendConnector {
         })
     }
     regist(user) {
+        if (this.userMap[user.user]) user.user = this.userMap[user.user]
         return this.request('POST', '/user.json', user)
     }
     getQuestion(uid) {
-        return this.request('GET', `/question.json?user=${uid}`)
+        var backendId
+        if (this.userMap[uid]) backendId = this.userMap[uid]
+        else backendId = uid
+        return this.request('GET', `/question.json?user=${backendId}`)
             .then((question) => {
                 this.userPrevQuestion[uid] = question.id
                 return question
             })
     }
     getStatus(uid) {
+        if (this.userMap[uid] != undefined) uid = this.userMap[uid]
         return this.request('GET', `/user.json?user=${uid}`)
     }
     answerQuestion(answer) {
@@ -63,6 +72,9 @@ class BackendConnector {
         }
         else {
             if (!answer.id) answer.id = prevQuestion
+            if (this.userMap[answer.user] != undefined) {
+                answer.user = this.userMap[answer.user]
+            }
             return this.request('POST', '/answer.json', answer)
         }
     }
@@ -152,6 +164,10 @@ class MyClient {
         }
         else if (commandIs('start')) {
             var user = message.author
+            var matchUid = message.content.match(/\/start\s+(\S+)/)
+            if (matchUid && matchUid[1]) {
+                this.backendConnector.alias(user.id, matchUid[1])
+            }
             return this.backendConnector.regist({
                 user: user.id,
                 nickname: user.username,
@@ -190,8 +206,11 @@ class MyClient {
         })
         rich.setColor(responseBase.command.color)
 
-        var remainder = user.questionStatus
-            .reduce((s, c) => c == 0 ? s+1 : s, 0)
+        var remainder =
+            user.questionStatus.reduce((s, c) => c == 0 ? s+1 : s, 0)
+        rich.addField('nickname', user.nickname)
+        rich.addField('id', user.name)
+        rich.addField('platform', user.platform)
         rich.addField('point', user.point)
         rich.addField('order', `${user.order} / ${user.total}`)
         rich.addField('remainder', remainder)
