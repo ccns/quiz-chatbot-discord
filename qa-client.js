@@ -229,7 +229,10 @@ class MyClient {
                 if (question.hint) rich.setFooter(question.hint)
                 
                 question.option.forEach(
-                    (text, index) => rich.addField(index, text)
+                    (text, index) => rich.addField(
+                        String.fromCharCode(index + 65), // 0123 to ABCD
+                        '\t' + text
+                    )
                 )
                 return user.send(rich)
             }).catch((questionError) => {
