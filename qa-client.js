@@ -231,7 +231,7 @@ class MyClient {
                 question.option.forEach(
                     (text, index) => rich.addField(
                         String.fromCharCode(index + 65), // 0123 to ABCD
-                        '\t' + text
+                        text
                     )
                 )
                 return user.send(rich)
