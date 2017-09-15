@@ -50,6 +50,7 @@ var myClient = qalib.run(host, token, responseDatabase)
 
   - 直接回覆以 0-3 a-d A-D 開頭的訊息回答
   - `/start` 開始答題
+  - `/start alice` 註冊為 alice 並以 alice 身份開始答題
   - `/status` 看自己的答題狀況
   - `/help` 指令說明
   - `/statistic` 排行榜
