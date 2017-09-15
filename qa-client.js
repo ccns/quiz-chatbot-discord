@@ -221,7 +221,7 @@ class MyClient {
             .getQuestion(user.id)
             .then((question) => {
                 var rich = new Discord.RichEmbed({
-                    title: `Q ${question.id}`,
+                    title: question.category,
                     description: question.question
                 })
                 rich.setColor('RANDOM')
