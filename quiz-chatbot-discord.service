@@ -1,0 +1,15 @@
+[Unit]
+Description=CCNS QA chatbot for discord
+
+[Service]
+ExecStart=/usr/bin/node /opt/quiz-chatbot/discord/start.js
+WorkingDirectory=/opt/quiz-chatbot/discord
+Restart=always
+    RestartSec=30
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=discord quiz chatbot
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=quiz-chatbot.target
