@@ -13,3 +13,4 @@ Environment=NODE_ENV=production
 
 [Install]
 WantedBy=quiz-chatbot.target
+StopWhenUnneeded=true
