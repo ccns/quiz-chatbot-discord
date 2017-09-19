@@ -9,8 +9,9 @@ function sleep(minisecond) {
 }
 
 class BackendConnector {
-    constructor(host) {
+    constructor(host, port) {
         this.host = host
+        this.port = port
         this.userPrevQuestion = {}
         this.userMap = {}
     }
@@ -22,6 +23,7 @@ class BackendConnector {
             var request = http.request(
                 {
                     host: this.host,
+                    port: this.port,
                     method: method,
                     path: path,
                     headers: {
@@ -244,8 +246,8 @@ class MyClient {
 exports.MyClient = MyClient
 exports.Discord = Discord
 exports.BackendConnector = BackendConnector
-exports.run = function (host, token, responseDatabase) {
-    var backendConnector = new this.BackendConnector(host)
+exports.run = function (host, port, token, responseDatabase) {
+    var backendConnector = new this.BackendConnector(host, port)
     var myClient = new this.MyClient(token, backendConnector, responseDatabase)
     return myClient
 }
