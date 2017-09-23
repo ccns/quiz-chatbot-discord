@@ -115,7 +115,7 @@ class MyClient {
     isAnswer(message) {
         return /^[0-3A-Da-d]/.test(message.content)
     }
-    answerQuestion(answer, user) {
+    answerQuestion(answer, user, id) {
         var backendConnector = this.backendConnector
         return backendConnector.answerQuestion({
             user: user.id,
@@ -153,17 +153,17 @@ class MyClient {
                 user: user.id,
                 nickname: user.username,
                 platform: 'discord'
-            }).catch((registError) => message
-                .reply(registError.message)
+            }).catch((registError) => user
+                .send(registError.message)
                 .then(() => this.backendConnector.getStatus(user.id))
             ).then(
                 (userJson) => user.send(
                     this.richifyStatus(userJson)
                 )
             ).then(
-                () => this.responseQuestion(user)
-            ).then(
                 () => message.reply('quiz already start in your private chat')
+            ).then(
+                () => this.responseQuestion(user)
             )
         }
         else if (commandIs('status')) {
