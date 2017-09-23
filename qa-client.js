@@ -99,15 +99,7 @@ class MyClient {
                 this.routeCommand(message)
             }
             else if (message.channel.type == 'dm') {
-                if (this.isAnswer(message)) {
-                    this.answerQuestion(message)
-                        .then(() => sleep(1000))
-                        .then(() => this.responseQuestion(message.author))
-                        .catch((answerError) =>
-                            message.reply(answerError.message)
-                        )
-                }
-                else this.routeCommand(message)
+                this.routeCommand(message)
             }
         })
 
@@ -123,28 +115,15 @@ class MyClient {
     isAnswer(message) {
         return /^[0-3A-Da-d]/.test(message.content)
     }
-    answerQuestion(message) {
+    answerQuestion(answer, user) {
         var backendConnector = this.backendConnector
-        var user = message.author
-        function parseAnswer(message) {
-            var answer = message.content.charAt(0)
-            switch (answer) {
-            case '0': case 'a': case 'A': return 0
-            case '1': case 'b': case 'B': return 1
-            case '2': case 'c': case 'C': return 2
-            case '3': case 'd': case 'D': return 3
-            }
-        }
         return backendConnector.answerQuestion({
             user: user.id,
-            answer: parseAnswer(message)
+            answer: answer
         }).then((correct) => {
             function responseCorrect(emoji, responseBase) {
                 var i = Math.floor(responseBase.length * Math.random())
-                return Promise.all([
-                    message.react(emoji),
-                    message.reply(responseBase[i])
-                ])
+                return user.send(`${emoji} ${responseBase[i]}`)
             }
             var base = this.responseBase
             return correct ?
@@ -219,7 +198,13 @@ class MyClient {
         return rich
     }
     responseQuestion(user) {
-        this.backendConnector
+        var isAnswer = (reaction) => {
+            var emoji = reaction.emoji
+            var number = this.responseBase.emoji.number
+            return reaction.count == 2 &&
+                number.some((emojiString) => emojiString == emoji.name)
+        }
+        return this.backendConnector
             .getQuestion(user.id)
             .then((question) => {
                 var rich = new Discord.RichEmbed({
@@ -230,16 +215,36 @@ class MyClient {
                 rich.setAuthor(question.author)
                 if (question.hint) rich.setFooter(question.hint)
                 
+                var numberToEmoji =
+                    (number) => this.responseBase.emoji.number[number]
+                var empty = '\u200B'
                 question.option.forEach(
                     (text, index) => rich.addField(
-                        String.fromCharCode(index + 65), // 0123 to ABCD
-                        text
+                        empty,
+                        `${numberToEmoji(index)} ${text}`
                     )
                 )
                 return user.send(rich)
+            }).then((message) => {
+                var number = this.responseBase.emoji.number
+                var reaction = Promise.resolve(true)
+                for (let i=0; i<=3; i++) {
+                    reaction = reaction.then(
+                        () => message.react(number[i])
+                    )
+                }
+                return reaction.then(() => message)
+            }).then((message) => message.awaitReactions(
+                isAnswer,
+                {max: 1}
+            )).then((reactionCollection) => {
+                var emoji = reactionCollection.first().emoji
+                var answer = this.responseBase.emoji.number.indexOf(emoji.name)
+                return this.answerQuestion(answer, user)
             }).catch((questionError) => {
                 user.send(questionError.message)
-            })
+            }).then(() => sleep(1000))
+            .then(() => this.responseQuestion(user))
     }
 }
 
