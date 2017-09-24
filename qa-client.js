@@ -94,12 +94,15 @@ class MyClient {
         })
 
         client.on('message', (message) => {
-            if (this.isSelf(message)) ;
-            else if (this.isMention(message)) {
-                this.routeCommand(message)
+            if (this.isSelf(message)) return false
+            else if (this.isMention(message) || message.channel.type == 'dm') {
+                return this.routeCommand(message)
+                    .catch(
+                        (commandError) => message.reply(message.content)
+                    )
             }
-            else if (message.channel.type == 'dm') {
-                this.routeCommand(message)
+            else {
+                return message.reply(message.content)
             }
         })
 
@@ -111,9 +114,6 @@ class MyClient {
     }
     isSelf(message) {
         return message.author.id == this.client.user.id
-    }
-    isAnswer(message) {
-        return /^[0-3A-Da-d]/.test(message.content)
     }
     answerQuestion(answer, user, id) {
         var backendConnector = this.backendConnector
@@ -142,6 +142,9 @@ class MyClient {
             return message.channel.send(rich)
         } else if (commandIs('statistic')) {
             return message.reply(responseBase.command.statistic)
+        }
+        else if (commandIs('next')) {
+            return this.responseQuestion(message.author)
         }
         else if (commandIs('start')) {
             var user = message.author
