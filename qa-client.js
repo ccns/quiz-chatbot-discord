@@ -12,7 +12,6 @@ class BackendConnector {
     constructor(host, port) {
         this.host = host
         this.port = port
-        this.userPrevQuestion = {}
         this.userMap = {}
     }
     alias(discordUid, customUid) {
@@ -56,29 +55,16 @@ class BackendConnector {
         if (this.userMap[uid]) backendId = this.userMap[uid]
         else backendId = uid
         return this.request('GET', `/question.json?user=${backendId}`)
-            .then((question) => {
-                this.userPrevQuestion[uid] = question.id
-                return question
-            })
     }
     getStatus(uid) {
         if (this.userMap[uid] != undefined) uid = this.userMap[uid]
         return this.request('GET', `/user.json?user=${uid}`)
     }
     answerQuestion(answer) {
-        var prevQuestion = this.userPrevQuestion[answer.user]
-        if (prevQuestion == undefined) {
-            return Promise.reject(
-                new Error('you have no question to answer now')
-            )
+        if (this.userMap[answer.user] != undefined) {
+            answer.user = this.userMap[answer.user]
         }
-        else {
-            if (!answer.id) answer.id = prevQuestion
-            if (this.userMap[answer.user] != undefined) {
-                answer.user = this.userMap[answer.user]
-            }
-            return this.request('POST', '/answer.json', answer)
-        }
+        return this.request('POST', '/answer.json', answer)
     }
 }
 
@@ -125,20 +111,21 @@ class MyClient {
     isSelf(message) {
         return message.author.id == this.client.user.id
     }
-    answerQuestion(answer, user, id) {
+    answerQuestion(answer, user, questionId) {
         var backendConnector = this.backendConnector
         return backendConnector.answerQuestion({
             user: user.id,
-            answer: answer
+            answer: answer,
+            id: questionId
         }).then((correct) => {
             function responseCorrect(emoji, responseBase) {
                 var i = Math.floor(responseBase.length * Math.random())
                 return user.send(`${emoji} ${responseBase[i]}`)
             }
             var base = this.responseBase
-            return correct ?
-                responseCorrect(base.emoji.right, base.right) :
-                responseCorrect(base.emoji.wrong, base.wrong)
+            
+            if (correct) return responseCorrect(base.emoji.right, base.right)
+            else return responseCorrect(base.emoji.wrong, base.wrong)
         })
     }
     routeCommand(message) {
@@ -217,9 +204,11 @@ class MyClient {
             return reaction.count == 2 &&
                 number.some((emojiString) => emojiString == emoji.name)
         }
+        var questionId
         return this.backendConnector
             .getQuestion(user.id)
             .then((question) => {
+                questionId = question.id // pass question id to answer
                 var rich = new Discord.RichEmbed({
                     title: question.category || 'CCNS',
                     description: question.question
@@ -253,7 +242,7 @@ class MyClient {
             )).then((reactionCollection) => {
                 var emoji = reactionCollection.first().emoji
                 var answer = this.responseBase.emoji.number.indexOf(emoji.name)
-                return this.answerQuestion(answer, user)
+                return this.answerQuestion(answer, user, questionId)
             }).catch((questionError) => {
                 user.send(questionError.message)
             }).then(() => sleep(1000))
