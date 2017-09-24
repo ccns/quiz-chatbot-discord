@@ -96,10 +96,20 @@ class MyClient {
         client.on('message', (message) => {
             if (this.isSelf(message)) return false
             else if (this.isMention(message) || message.channel.type == 'dm') {
-                return this.routeCommand(message)
-                    .catch(
-                        (commandError) => message.reply(message.content)
-                    )
+                if (message.content.match(/\/\w+/)) {
+                    return this.routeCommand(message)
+                        .catch((commandError) => {
+                            return message.reply(commandError.message)
+                        })
+                }
+                else {
+                    return message.channel.awaitMessages(
+                        (newMessage) => !this.isSelf(newMessage),
+                        {maxMatches: 1}
+                    ).then((collector) => {
+                        return collector.first().reply(message.content)
+                    })
+                }
             }
             else {
                 return message.reply(message.content)
