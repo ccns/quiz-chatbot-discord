@@ -97,9 +97,7 @@ class MyClient {
                     })
                 }
             }
-            else {
-                return message.reply(message.content)
-            }
+            else return false
         })
 
         this.then = promiseClient.then.bind(promiseClient)
