@@ -204,12 +204,12 @@ class MyClient {
             .getQuestion(apiName)
             .then((question) => {
                 questionId = question.id // pass question id to answer
-                var rich = new Discord.RichEmbed({
+                var rich = new Discord.MessageEmbed({
                     title: question.category || 'CCNS',
-                    description: question.question
+                    description: question.question,
+                    color: 'RANDOM',
+                    author: question.author // TODO map category to color
                 })
-                rich.setColor('RANDOM') // TODO map category to color
-                rich.setAuthor(question.author)
                 if (question.hint) rich.setFooter(question.hint)
                 
                 var numberToEmoji =
