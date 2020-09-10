@@ -254,7 +254,7 @@ exports.run = function (apiUrl, token, responseDatabase) {
     var myClient = new this.MyClient(token, backendConnector, responseDatabase)
     return myClient
 }
-exports.runFile = function () {
+exports.runArgvFile = function () {
     const fs = require('fs')
     const process = require('process')
     const [apiFile, tokenFile, responseDatabaseFile] = process.argv.slice(2)
@@ -265,5 +265,5 @@ exports.runFile = function () {
 }
 
 if (require.main == module) {
-    exports.runFile()
+    exports.runArgvFile()
 }

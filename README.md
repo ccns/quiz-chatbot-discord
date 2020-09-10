@@ -4,6 +4,13 @@
 於 discord 平台上的聊天機器人，
 用 discord.js 寫成。
 
+discord.js 入門可以看 <https://discordjs.guide> ，
+api 文件則看 <https://discord.js.org/#/docs/main/stable/general/welcome> 。
+另外 api 中有用到一個型別 collection，
+不知道為什麼原本在文件裡的連結連不過去，一直找不到這個類的 api。
+後來手動在左上角切成 `View docs for Collection master` 才看到
+<https://discord.js.org/#/docs/collection/master/class/Collection> 。
+
 ## 執行
 
 ```javascript
