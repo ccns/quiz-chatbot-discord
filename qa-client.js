@@ -1,6 +1,7 @@
 
-var Discord = require('discord.js')
-var https = require('https')
+// var Discord = require('discord.js')
+// var https = require('https')
+var Discord, https
 
 function sleep(minisecond) {
     return new Promise((wakeup) => {
@@ -104,7 +105,7 @@ class MyClient {
         return `${user.username}#${user.id}@discord`
     }
     isMention(message) {
-        return message.mentions.users.has(this.client.user.id)
+        return message.mentions.has(this.client.user)
     }
     isSelf(message) {
         return message.author.id == this.client.user.id
@@ -248,8 +249,21 @@ class MyClient {
 exports.MyClient = MyClient
 exports.Discord = Discord
 exports.BackendConnector = BackendConnector
-exports.run = function (host, port, token, responseDatabase) {
-    var backendConnector = new this.BackendConnector(host, port)
+exports.run = function (apiUrl, token, responseDatabase) {
+    var backendConnector = new this.BackendConnector(apiUrl)
     var myClient = new this.MyClient(token, backendConnector, responseDatabase)
     return myClient
+}
+exports.runFile = function () {
+    const fs = require('fs')
+    const process = require('process')
+    const [apiFile, tokenFile, responseDatabaseFile] = process.argv.slice(2)
+    const apiUrl = fs.readFileSync(apiFile, 'utf8')
+    const token = fs.readFileSync(tokenFile, 'utf8')
+    const responseDatabase = require(responseDatabaseFile)
+    return this.run(apiUrl, token, responseDatabase)
+}
+
+if (require.main == module) {
+    exports.runFile()
 }
