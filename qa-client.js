@@ -1,6 +1,6 @@
 
 var Discord = require('discord.js')
-var http = require('http')
+var https = require('https')
 
 function sleep(minisecond) {
     return new Promise((wakeup) => {
@@ -9,9 +9,8 @@ function sleep(minisecond) {
 }
 
 class BackendConnector {
-    constructor(host, port) {
-        this.host = host
-        this.port = port
+    constructor(apiUrl) {
+        this.apiUrl = apiUrl
         this.userMap = {}
     }
     alias(discordUid, customUid) {
@@ -19,12 +18,10 @@ class BackendConnector {
     }
     request(method, path, json) {
         return new Promise((routeResponse, routeError) => {
-            var request = http.request(
+            var request = https.request(
+                `${this.apiUrl}/${path}`,
                 {
-                    host: this.host,
-                    port: this.port,
                     method: method,
-                    path: path,
                     headers: {
                         'Content-Type': 'application/json',
                         'User-Agent': 'discord QA bot (node.js)'
@@ -48,7 +45,7 @@ class BackendConnector {
     }
     regist(user) {
         if (this.userMap[user.user]) user.user = this.userMap[user.user]
-        return this.request('POST', '/user.json', user)
+        return this.request('POST', 'players', user)
     }
     getQuestion(uid) {
         var backendId
@@ -103,6 +100,9 @@ class MyClient {
         this.then = promiseClient.then.bind(promiseClient)
         client.login(token)
     }
+    userToApiName(user) {
+        return `${user.username}#${user.id}@discord`
+    }
     isMention(message) {
         return message.mentions.users.has(this.client.user.id)
     }
@@ -111,8 +111,9 @@ class MyClient {
     }
     answerQuestion(answer, user, questionId) {
         var backendConnector = this.backendConnector
+        var apiName = this.userToApiName(user)
         return backendConnector.answerQuestion({
-            user: user.id,
+            user: apiName,
             answer: answer,
             id: questionId
         }).then((correct) => {
@@ -143,17 +144,12 @@ class MyClient {
         }
         else if (commandIs('start')) {
             var user = message.author
-            var matchUid = message.content.match(/\/start\s+(\S+)/)
-            if (matchUid && matchUid[1]) {
-                this.backendConnector.alias(user.id, matchUid[1])
-            }
+            var apiName = this.userToApiName(user)
             return this.backendConnector.regist({
-                user: user.id,
-                nickname: user.username,
-                platform: 'discord'
+                name: apiName
             }).catch((registError) => user
                 .send(registError.message)
-                .then(() => this.backendConnector.getStatus(user.id))
+                .then(() => this.backendConnector.getStatus(apiName))
             ).then(
                 (userJson) => user.send(
                     this.richifyStatus(userJson)
@@ -196,22 +192,23 @@ class MyClient {
         return rich
     }
     responseQuestion(user) {
-        var isAnswer = (reaction) => {
+        var isAnswer = (reaction) => { // TODO move to static method
             var emoji = reaction.emoji
             var number = this.responseBase.emoji.number
             return reaction.count == 2 &&
                 number.some((emojiString) => emojiString == emoji.name)
         }
+        var apiName = this.userToApiName(user)
         var questionId
         return this.backendConnector
-            .getQuestion(user.id)
+            .getQuestion(apiName)
             .then((question) => {
                 questionId = question.id // pass question id to answer
                 var rich = new Discord.RichEmbed({
                     title: question.category || 'CCNS',
                     description: question.question
                 })
-                rich.setColor('RANDOM')
+                rich.setColor('RANDOM') // TODO map category to color
                 rich.setAuthor(question.author)
                 if (question.hint) rich.setFooter(question.hint)
                 
