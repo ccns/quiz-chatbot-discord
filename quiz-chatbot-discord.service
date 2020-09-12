@@ -1,16 +1,18 @@
 [Unit]
 Description=CCNS QA chatbot for discord
+Wants=network-online.target
+After=network.target network-online.target
 
 [Service]
-ExecStart=/usr/bin/node /opt/quiz-chatbot/discord/start.js
+ExecStart=/usr/bin/node /opt/quiz-chatbot/discord/index.js api.url token response-database.json
 WorkingDirectory=/opt/quiz-chatbot/discord
 Restart=always
-    RestartSec=30
+RestartSec=30
 StandardOutput=syslog
 StandardError=syslog
-SyslogIdentifier=discord quiz chatbot
+SyslogIdentifier=quiz-chatbot-discord
 Environment=NODE_ENV=production
+DynamicUser=true
 
 [Install]
-WantedBy=quiz-chatbot.target
-StopWhenUnneeded=true
+WantedBy=multi-user.target
