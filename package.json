@@ -1,0 +1,28 @@
+{
+  "name": "quiz-chatbot-discord",
+  "version": "2.0.0",
+  "description": "ccns quiz event chatbot for discord",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ccns/quiz-chatbot-discord.git"
+  },
+  "keywords": [
+    "chatbot",
+    "ccns",
+    "discord",
+    "quiz"
+  ],
+  "author": "gholk",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ccns/quiz-chatbot-discord/issues"
+  },
+  "homepage": "https://github.com/ccns/quiz-chatbot-discord#readme",
+  "dependencies": {
+    "discord.js": "^12.3.1"
+  }
+}

@@ -12,17 +12,10 @@ api 文件則看 <https://discord.js.org/#/docs/main/stable/general/welcome> 。
 <https://discord.js.org/#/docs/collection/master/class/Collection> 。
 
 ## 執行
-
-```javascript
-var qalib = require('./qa-client')
-var fs = require('fs')
-var token = 'your chat bot token'
-var responseDatabase = JSON.parse(fs.readFileSync('./response-database.json'))
-
-var host = 'quiz backend server url'
-// same interface as </ccns/quiz-chatbot-server>
-
-var myClient = qalib.run(host, token, responseDatabase)
+```sh
+echo http://api.url/path > api.url
+echo XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX > discord.token
+node index.js api.url token response-database.json
 ```
 
 ## chatbot 管理
