@@ -1,7 +1,6 @@
 
-// var Discord = require('discord.js')
-// var https = require('https')
-var Discord, https
+var Discord = require('discord.js')
+var http = require('http')
 
 function sleep(minisecond) {
     return new Promise((wakeup) => {
@@ -12,57 +11,85 @@ function sleep(minisecond) {
 class BackendConnector {
     constructor(apiUrl) {
         this.apiUrl = apiUrl
-        this.userMap = {}
-    }
-    alias(discordUid, customUid) {
-        this.userMap[discordUid] = customUid
+        this.userProperty = {}
     }
     request(method, path, json) {
         return new Promise((routeResponse, routeError) => {
-            var request = https.request(
+            var request = http.request(
                 `${this.apiUrl}/${path}`,
                 {
                     method: method,
                     headers: {
                         'Content-Type': 'application/json',
-                        'User-Agent': 'discord QA bot (node.js)'
+                        'User-Agent': 'quiz-chatbot-discord QA bot (node.js)'
                     }
                 },
                 (response) => {
                     var responseData = ''
                     response.on('data', (segment) => responseData += segment)
                     response.on('end', () => {
-                        var json = JSON.parse(responseData)
-                        if (response.statusCode == 200) {
-                            routeResponse(json)
+                        var json
+                        try {
+                            json = JSON.parse(responseData)
                         }
-                        else routeError(json)
+                        catch (parseError) {
+                            routeError(parseError)
+                        }
+                        if (json) routeResponse(json)
                     })
                 }
             )
+            request.on('timeout', (timeoutError) => routeError(timeoutError))
             if (json) request.write(JSON.stringify(json))
             request.end()
         })
     }
-    regist(user) {
-        if (this.userMap[user.user]) user.user = this.userMap[user.user]
-        return this.request('POST', 'players', user)
-    }
-    getQuestion(uid) {
-        var backendId
-        if (this.userMap[uid]) backendId = this.userMap[uid]
-        else backendId = uid
-        return this.request('GET', `/question.json?user=${backendId}`)
-    }
-    getStatus(uid) {
-        if (this.userMap[uid] != undefined) uid = this.userMap[uid]
-        return this.request('GET', `/user.json?user=${uid}`)
-    }
-    answerQuestion(answer) {
-        if (this.userMap[answer.user] != undefined) {
-            answer.user = this.userMap[answer.user]
+    async regist(user) {
+        const response = await this.request('POST', 'players', user)
+        if (response.status.status_code == 409) {
+            // this should be duplicate user
+            throw new Error(response.status.message)
         }
-        return this.request('POST', '/answer.json', answer)
+        else if (response.status.status_code != 201) {
+            throw response
+        }
+        else return response.data
+    }
+    isUserFinishQuestion(uid) {
+        var db = this.userProperty
+        return db[`${uid}.finish_question`]
+    }
+    setUserFinishQuestion(uid, finish = true) {
+        var db = this.userProperty
+        db[`${uid}.finish_question`] = true
+    }
+    async getQuestion(uid) {
+        var finish = false
+        var path = `players/${uid}`
+        if (!this.isUserFinishQuestion(uid)) {
+            const response = await this.request('GET', `${path}/feed`)
+            if (response.data) return response
+            else {
+                this.setUserFinishQuestion(uid)
+                finish = true
+            }
+        }
+        return await this.request('GET', `${path}/rand`)
+    }
+    async getStatus(uid) {
+        var response = await this.request('GET', `players/${uid}`)
+        if (response.status.status_code == 200) return response.data
+        else throw new Error(`player ${uid} not found`)
+    }
+    async getQuestionStatus(uid) {
+        var response = await this.request('GET', `answers?player=${uid}`)
+        if (response.data && response.data[0]) return response.data[0]
+    }
+    async answerQuestion(answer) {
+        const response = await this.request('POST', 'answers', answer)
+        if (response.status.status_code == 409) {
+            throw new Error('this question is already answered')
+        }
     }
 }
 
@@ -72,6 +99,7 @@ class MyClient {
         this.client = client
         this.backendConnector = backendConnector
         this.responseBase = responseBase
+        this.platform = 'discord'
         
         var promiseClient = new Promise((afterLogin) => {
             client.on('ready', afterLogin)
@@ -102,7 +130,7 @@ class MyClient {
         client.login(token)
     }
     userToApiName(user) {
-        return `${user.username}#${user.id}@discord`
+        return `${this.platform}-${user.id}`
     }
     isMention(message) {
         return message.mentions.has(this.client.user)
@@ -110,14 +138,18 @@ class MyClient {
     isSelf(message) {
         return message.author.id == this.client.user.id
     }
-    answerQuestion(answer, user, questionId) {
+    answerQuestion(answer, user, question) {
         var backendConnector = this.backendConnector
         var apiName = this.userToApiName(user)
+        // map A-D to 0-3
+        var correct = answer == (question.answer.charCodeAt() - 65)
         return backendConnector.answerQuestion({
-            user: apiName,
-            answer: answer,
-            id: questionId
-        }).then((correct) => {
+            player_name: apiName,
+            correct,
+            quiz_number: question.number
+        }).catch(scoreError => {
+            return user.send(scoreError.message || String(scoreError))
+        }).then(() => {
             function responseCorrect(emoji, responseBase) {
                 var i = Math.floor(responseBase.length * Math.random())
                 return user.send(`${emoji} ${responseBase[i]}`)
@@ -134,7 +166,7 @@ class MyClient {
         }
         var responseBase = this.responseBase
         if (commandIs('help')) {
-            var rich = new Discord.RichEmbed(responseBase.command.help)
+            var rich = new Discord.MessageEmbed(responseBase.command.help)
             rich.setColor(responseBase.command.color)
             return message.channel.send(rich)
         } else if (commandIs('statistic')) {
@@ -147,11 +179,14 @@ class MyClient {
             var user = message.author
             var apiName = this.userToApiName(user)
             return this.backendConnector.regist({
-                name: apiName
-            }).catch((registError) => user
-                .send(registError.message)
-                .then(() => this.backendConnector.getStatus(apiName))
-            ).then(
+                name: apiName,
+                nickname: user.username,
+                platform: this.platform
+            }).catch((registError) => {
+                var message = registError.message || String(registError)
+                return user.send(message)
+                    .then(() => this.backendConnector.getStatus(apiName))
+            }).then(
                 (userJson) => user.send(
                     this.richifyStatus(userJson)
                 )
@@ -163,11 +198,11 @@ class MyClient {
         }
         else if (commandIs('status')) {
             return this.backendConnector
-                .getStatus(message.author.id)
-                .then((user) => message.channel.send(
-                    this.richifyStatus(user)
-                )).catch((userError) => {
-                    message.reply(userError.message)
+                .getStatus(this.userToApiName(message.author))
+                .then((user) => {
+                    return message.channel.send(this.richifyStatus(user))
+                }).catch((userError) => {
+                    return message.reply(userError.message)
                 })
         }
         else {
@@ -176,20 +211,21 @@ class MyClient {
     }
     richifyStatus(user) {
         var responseBase = this.responseBase
-        var rich = new Discord.RichEmbed({
+        var rich = new Discord.MessageEmbed({
             title: 'status',
             description: `${user.nickname} quiz status`
         })
         rich.setColor(responseBase.command.color)
 
-        var remainder =
-            user.questionStatus.reduce((s, c) => c == 0 ? s+1 : s, 0)
+        // var remainder =
+        //     user.questionStatus.reduce((s, c) => c == 0 ? s+1 : s, 0)
         rich.addField('nickname', user.nickname)
         rich.addField('id', user.name)
         rich.addField('platform', user.platform)
-        rich.addField('point', user.point)
-        rich.addField('order', `${user.order} / ${user.total}`)
-        rich.addField('remainder', remainder)
+        // TODO
+        // rich.addField('point', user.point)
+        // rich.addField('order', `${user.order} / ${user.total}`)
+        // rich.addField('remainder', remainder)
         return rich
     }
     responseQuestion(user) {
@@ -200,23 +236,23 @@ class MyClient {
                 number.some((emojiString) => emojiString == emoji.name)
         }
         var apiName = this.userToApiName(user)
-        var questionId
+        var question
         return this.backendConnector
-            .getQuestion(apiName)
-            .then((question) => {
-                questionId = question.id // pass question id to answer
+            .getQuestion(apiName) // TODO deal finished
+            .then((response) => {
+                question = response.data
                 var rich = new Discord.MessageEmbed({
-                    title: question.category || 'CCNS',
-                    description: question.question,
-                    color: 'RANDOM',
-                    author: question.author // TODO map category to color
+                    title: question.tags[0] || 'CCNS',
+                    description: question.description,
+                    color: 'RANDOM' // TODO map category to color
+                    // author: question.author
                 })
                 if (question.hint) rich.setFooter(question.hint)
                 
                 var numberToEmoji =
                     (number) => this.responseBase.emoji.number[number]
                 var empty = '\u200B'
-                question.option.forEach(
+                question.options.forEach(
                     (text, index) => rich.addField(
                         empty,
                         `${numberToEmoji(index)} ${text}`
@@ -238,7 +274,7 @@ class MyClient {
             )).then((reactionCollection) => {
                 var emoji = reactionCollection.first().emoji
                 var answer = this.responseBase.emoji.number.indexOf(emoji.name)
-                return this.answerQuestion(answer, user, questionId)
+                return this.answerQuestion(answer, user, question)
             }).catch((questionError) => {
                 user.send(questionError.message)
             }).then(() => sleep(1000))
@@ -258,9 +294,11 @@ exports.runArgvFile = function () {
     const fs = require('fs')
     const process = require('process')
     const [apiFile, tokenFile, responseDatabaseFile] = process.argv.slice(2)
-    const apiUrl = fs.readFileSync(apiFile, 'utf8')
-    const token = fs.readFileSync(tokenFile, 'utf8')
-    const responseDatabase = require(responseDatabaseFile)
+    const apiUrl = fs.readFileSync(apiFile, 'utf8').trim()
+    const token = fs.readFileSync(tokenFile, 'utf8').trim()
+    const responseDatabase =
+          JSON.parse(fs.readFileSync(responseDatabaseFile, 'utf8'))
+
     return this.run(apiUrl, token, responseDatabase)
 }
 
