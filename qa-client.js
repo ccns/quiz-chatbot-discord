@@ -1,6 +1,6 @@
-
 var Discord = require('discord.js')
 var http = require('http')
+var crypto = require('crypto')
 
 function sleep(minisecond) {
     return new Promise((wakeup) => {
@@ -80,10 +80,6 @@ class BackendConnector {
         var response = await this.request('GET', `players/${uid}`)
         if (response.status.status_code == 200) return response.data
         else throw new Error(`player ${uid} not found`)
-    }
-    async getQuestionStatus(uid) {
-        var response = await this.request('GET', `answers?player=${uid}`)
-        if (response.data && response.data[0]) return response.data[0]
     }
     async answerQuestion(answer) {
         const response = await this.request('POST', 'answers', answer)
@@ -217,16 +213,19 @@ class MyClient {
         })
         rich.setColor(responseBase.command.color)
 
-        // var remainder =
-        //     user.questionStatus.reduce((s, c) => c == 0 ? s+1 : s, 0)
-        rich.addField('nickname', user.nickname)
+        rich.addField('暱稱', user.nickname)
         rich.addField('id', user.name)
-        rich.addField('platform', user.platform)
-        // TODO
-        // rich.addField('point', user.point)
-        // rich.addField('order', `${user.order} / ${user.total}`)
-        // rich.addField('remainder', remainder)
+        rich.addField('平台', user.platform)
+        rich.addField('分數', user.score)
+        rich.addField('名次', user.rank)
+        rich.addField('剩餘題數', user.last)
         return rich
+    }
+    stringToColor(string) {
+        const hash = crypto.createHash('sha256')
+        hash.update(string)
+        const buffer = hash.digest()
+        return Array.from(buffer.slice(0, 3))
     }
     responseQuestion(user) {
         var isAnswer = (reaction) => { // TODO move to static method
@@ -238,13 +237,14 @@ class MyClient {
         var apiName = this.userToApiName(user)
         var question
         return this.backendConnector
-            .getQuestion(apiName) // TODO deal finished
+            .getQuestion(apiName)
             .then((response) => {
                 question = response.data
+                var category = question.tags.join(' ') || '其它'
                 var rich = new Discord.MessageEmbed({
-                    title: question.tags[0] || 'CCNS',
+                    title: category,
                     description: question.description,
-                    color: 'RANDOM' // TODO map category to color
+                    color: this.stringToColor(category)
                     // author: question.author
                 })
                 if (question.hint) rich.setFooter(question.hint)
