@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var Discord = require('discord.js')
 var http = require('http')
 var crypto = require('crypto')
