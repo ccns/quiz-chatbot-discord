@@ -100,7 +100,7 @@ class MyClient {
         this.platform = 'discord'
         
         var promiseClient = new Promise((afterLogin) => {
-            client.on('ready', afterLogin)
+            client.once('ready', afterLogin)
         })
 
         client.on('message', (message) => {
@@ -113,11 +113,13 @@ class MyClient {
                         })
                 }
                 else {
+                    // this is a easy delay echo system,
+                    // it will echo your message after you send next message
                     return message.channel.awaitMessages(
                         (newMessage) => !this.isSelf(newMessage),
-                        {maxMatches: 1}
-                    ).then((collector) => {
-                        return collector.first().reply(message.content)
+                        {max: 1}
+                    ).then((collection) => {
+                        return collection.first().reply(message.content)
                     })
                 }
             }

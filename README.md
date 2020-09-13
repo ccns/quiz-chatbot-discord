@@ -48,3 +48,35 @@ node index.js api.url token response-database.json
 
 答對會對你的訊息按讚（大拇指），答錯則是向下的大拇指；
 然後回覆事先錄製的對白，延時一秒後送出下一題。
+
+### delay echo 對話系統
+若是在公頻 `@` 本機器人，或是在私頻直接對話，
+但內容沒有用 `/` 開頭下指定，
+機器人會回覆上一次 `@` 本機器人的非指定內容，
+也就是一個簡單的延遲回覆對話系統，可以簡單製造在對話的錯覺。
+
+#### 公開頻道
+```
+gholk: @escho hey
+gholk: @escho how are you?
+escho: @gholk, @escho hey
+gholk: @escho how about your loading?
+escho: @gholk, @escho how are you?
+gholk: @escho i am fine
+escho: @gholk, @escho how about your loading?
+```
+
+#### 私人對話
+```
+gholk: hey
+gholk: what?
+escho: hey
+gholk: ??
+escho: what?
+gholk: i say hey
+escho: ??
+gholk: ...
+escho: i say hey
+gholk: hey!!
+escho: ...
+```
