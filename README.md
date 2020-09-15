@@ -80,3 +80,26 @@ escho: i say hey
 gholk: hey!!
 escho: ...
 ```
+
+## 大量私訊功能
+腳本 `broadcast-dm.js` 可以用來發私訊。
+
+```sh
+node broadcast-dm.js token-file \
+'我們是電腦與網路愛好社 CCNS，感謝您遊玩本遊戲。
+期待能在社博以及社大與您相見！
+社大時間為 2020-09-24 晚上，歡迎你！' \
+    330360675291496448 365456618080567297
+```
+
+參數是 token 檔名、訊息，其餘是 discord 的數字 user id。
+以 ccns 社博來說，可以從 database 的 username 撈。
+
+```sh
+node -p 'JSON.parse(process.argv[1]).data
+    .filter(u => u.platform == "discord")
+    .map(u => u.name.replace(/discord-/,"")).join("\n")' \
+    "$(curl --silent $api_url/players)" \
+| xargs node broadcast-dm.js token-file "$message"
+```
+
