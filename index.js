@@ -272,6 +272,7 @@ class MyClient {
                 var numberToEmoji =
                     (number) => this.responseBase.emoji.number[number]
                 var empty = '\u200B'
+                rich.addField(empty, `${question.score} 分`)
                 question.options.forEach(
                     (text, index) => rich.addField(
                         empty,
