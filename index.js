@@ -251,7 +251,6 @@ class MyClient {
                     color: this.stringToColor(category)
                     // author: question.author
                 })
-                if (question.hint) rich.setFooter(question.hint)
                 
                 var numberToEmoji =
                     (number) => this.responseBase.emoji.number[number]
@@ -262,6 +261,10 @@ class MyClient {
                         `${numberToEmoji(index)} ${text}`
                     )
                 )
+                if (question.hint) {
+                    rich.addField('提示', `||${question.hint}||`)
+                }
+
                 return user.send(rich)
             }).then((message) => {
                 var number = this.responseBase.emoji.number
