@@ -248,6 +248,9 @@ class MyClient {
         const buffer = hash.digest()
         return Array.from(buffer.slice(0, 3))
     }
+    escape(string) {
+        return Discord.Util.escapeMarkdown(string).replace(/[\\:]/g, '\\$&')
+    }
     responseQuestion(user) {
         var isAnswer = (reaction) => { // TODO move to static method
             var emoji = reaction.emoji
@@ -276,11 +279,12 @@ class MyClient {
                 question.options.forEach(
                     (text, index) => rich.addField(
                         empty,
-                        `${numberToEmoji(index)} ${text}`
+                        `${numberToEmoji(index)} ${this.escape(text)}`
                     )
                 )
                 if (question.hint) {
-                    rich.addField('提示', `||${question.hint}||`)
+                    const hint = this.escape(question.hint)
+                    rich.addField('提示', `||${hint}||`)
                 }
 
                 return user.send(rich)
