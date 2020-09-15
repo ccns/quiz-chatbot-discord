@@ -65,18 +65,18 @@ class BackendConnector {
         var db = this.userProperty
         db[`${uid}.finish_question`] = true
     }
-    async getQuestion(uid) {
-        var finish = false
-        var path = `players/${uid}`
-        if (!this.isUserFinishQuestion(uid)) {
-            const response = await this.request('GET', `${path}/feed`)
-            if (response.data) return response
-            else {
-                this.setUserFinishQuestion(uid)
-                finish = true
-            }
+    async getQuestionFeed(uid) {
+        if (this.isUserFinishQuestion(uid)) return null
+        const response = await this.request('GET', `players/${uid}/feed`)
+        if (response.data) return response.data
+        else {
+            this.setUserFinishQuestion(uid)
+            throw new Error('你已完成所有題目，系統仍會持續出題但不記分。')
         }
-        return await this.request('GET', `${path}/rand`)
+    }
+    async getQuestionRandom(uid) {
+        const response = await this.request('GET', `players/${uid}/rand`)
+        return response.data
     }
     async getStatus(uid) {
         var response = await this.request('GET', `players/${uid}`)
@@ -84,10 +84,13 @@ class BackendConnector {
         else throw new Error(`player ${uid} not found`)
     }
     async answerQuestion(answer) {
+        const uid = answer.player_name
+        if (this.isUserFinishQuestion(uid)) return null
         const response = await this.request('POST', 'answers', answer)
         if (response.status.status_code == 409) {
             throw new Error('this question is already answered')
         }
+        else return response.data
     }
 }
 
@@ -110,6 +113,7 @@ class MyClient {
                     return this.routeCommand(message)
                         .catch((commandError) => {
                             return message.reply(commandError.message)
+                                .then(() => {throw commandError})
                         })
                 }
                 else {
@@ -241,9 +245,15 @@ class MyClient {
         var apiName = this.userToApiName(user)
         var question
         return this.backendConnector
-            .getQuestion(apiName)
-            .then((response) => {
-                question = response.data
+            .getQuestionFeed(apiName)
+            .catch(error => {
+                return user.send(error.message || String(error))
+                    .then(() => null)
+            }).then(question => {
+                if (question) return question
+                else return this.backendConnector.getQuestionRandom(apiName)
+            }).then((q) => {
+                question = q
                 var category = question.tags.join(' ') || '其它'
                 var rich = new Discord.MessageEmbed({
                     title: category,
