@@ -66,13 +66,21 @@ class BackendConnector {
         db[`${uid}.finish_question`] = true
     }
     async getQuestionFeed(uid) {
-        if (this.isUserFinishQuestion(uid)) return null
+        if (this.isUserFinishQuestion(uid)) {
+            return await this.getQuestionRandom(uid)
+        }
+
         const response = await this.request('GET', `players/${uid}/feed`)
         if (response.data) return response.data
-        else {
+        else if (response.status.status_code == 200) {
             this.setUserFinishQuestion(uid)
-            throw new Error('你已完成所有題目，系統仍會持續出題但不記分。')
+            return await this.getQuestionRandom(uid)
         }
+        else if (response.status.status_code == 500) {
+            var message = '你尚未註冊，請先使用 /start 命令註冊才會開始計分'
+            throw new Error(message)
+        }
+        else throw response.status
     }
     async getQuestionRandom(uid) {
         const response = await this.request('GET', `players/${uid}/rand`)
@@ -113,7 +121,7 @@ class MyClient {
                     return this.routeCommand(message)
                         .catch((commandError) => {
                             return message.reply(commandError.message)
-                                .then(() => {throw commandError})
+                                .then(() => console.log(commandError))
                         })
                 }
                 else {
@@ -251,13 +259,7 @@ class MyClient {
         var question
         return this.backendConnector
             .getQuestionFeed(apiName)
-            .catch(error => {
-                return user.send(error.message || String(error))
-                    .then(() => null)
-            }).then(question => {
-                if (question) return question
-                else return this.backendConnector.getQuestionRandom(apiName)
-            }).then((q) => {
+            .then((q) => {
                 question = q
                 var category = question.tags.join(' ') || '其它'
                 var rich = new Discord.MessageEmbed({
@@ -297,10 +299,11 @@ class MyClient {
                 var emoji = reactionCollection.first().emoji
                 var answer = this.responseBase.emoji.number.indexOf(emoji.name)
                 return this.answerQuestion(answer, user, question)
-            }).catch((questionError) => {
-                user.send(questionError.message)
             }).then(() => sleep(1000))
             .then(() => this.responseQuestion(user))
+            .catch((questionError) => {
+                user.send(questionError.message)
+            })
     }
 }
 
