@@ -15,6 +15,10 @@
                     "value": "regist by discord id and start QA quiz in private channel. after start, bot will send your status. you shoud notice wether that status is your status or not, then regist new one by specify new id by `/start your-new-id. (following command)"
                 },
                 {
+                    "name": "/start alice",
+                    "value": "regist as alice and start answer question."
+                },
+                {
                     "name": "/next",
                     "value": "ask for next question, previous question still would show up future."
                 },

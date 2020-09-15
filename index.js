@@ -181,10 +181,15 @@ class MyClient {
         }
         else if (commandIs('start')) {
             var user = message.author
+            var nickname
+            var matchUid = message.content.match(/\/start\s+(\S+)/)
+            if (matchUid && matchUid[1]) nickname = matchUid[1]
+            else nickname = user.username
+
             var apiName = this.userToApiName(user)
             return this.backendConnector.regist({
                 name: apiName,
-                nickname: user.username,
+                nickname,
                 platform: this.platform
             }).catch((registError) => {
                 var message = registError.message || String(registError)
