@@ -1,18 +1,18 @@
 {
     "command": {
         "color": "GREEN",
-        "statistic": "see: <http://leaderboard.ccns.ncku.edu.tw>",
+        "statistic": "See: <http://leaderboard.ccns.ncku.edu.tw>",
         "help": {
             "title": "help",
-            "description": "this is quiz chat bot escho! answer question by click alphabet emoji below the question.\n\nall command start with `/`. when use in group channel, need add prefix `@escho#1145`. for example, you can show your status to other in **qa-quiz** by send `@escho#1145 /status` in qa-quiz channel.",
+            "description": "This is quiz chat bot escho! Answer question by clicking any alphabet emoji below the question.\n\nAll commands start with `/`. To use the commands in a group channel, add the prefix `@escho#1145` to the command. For example, you can show your status to others in **qa-quiz** by sending `@escho#1145 /status` in the qa-quiz channel.",
             "fields": [
                 {
                     "name": "/help",
-                    "value": "show this help"
+                    "value": "Show this help message"
                 },
                 {
                     "name": "/start",
-                    "value": "regist by discord id and start QA quiz in private channel. after start, bot will send your status. you shoud notice wether that status is your status or not, then regist new one by specify new id by `/start your-new-id. (following command)"
+                    "value": "Register by your discord id and start QA quiz in a private channel. The bot will then send you your status. You should check whether the status is yours, and then you can register a new one by specifying the new id with `/start your-new-id` (the following command)."
                 },
                 {
                     "name": "/start alice",
@@ -20,15 +20,15 @@
                 },
                 {
                     "name": "/next",
-                    "value": "ask for next question, previous question still would show up future."
+                    "value": "Ask for the next question. The previous question will still show up in the future."
                 },
                 {
                     "name": "/status",
-                    "value": "show your quiz status"
+                    "value": "Show your quiz status"
                 },
                 {
                     "name": "/statistic",
-                    "value": "show all user status"
+                    "value": "Show all users' status"
                 }
             ]
         }
