@@ -1,6 +1,5 @@
 # Discord quiz chatbot
-
-2017 年 CCNS QA 活動用的，
+2020 年 CCNS QA 活動用的，
 於 discord 平台上的聊天機器人，
 用 discord.js 寫成。
 
@@ -10,6 +9,11 @@ api 文件則看 <https://discord.js.org/#/docs/main/stable/general/welcome> 。
 不知道為什麼原本在文件裡的連結連不過去，一直找不到這個類的 api。
 後來手動在左上角切成 `View docs for Collection master` 才看到
 <https://discord.js.org/#/docs/collection/master/class/Collection> 。
+
+後端與資料庫介接的介面是配合 [2020 年的後端][quiz server 2020] ，
+當時 api 介面版本是 v1。
+
+[quiz server 2020]: https://github.com/ccns/quiz-server/
 
 ## 執行
 ```sh
