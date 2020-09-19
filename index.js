@@ -249,7 +249,7 @@ class MyClient {
         return Array.from(buffer.slice(0, 3))
     }
     escape(string) {
-        return Discord.Util.escapeMarkdown(string).replace(/[\\:]/g, '\\$&')
+        return Discord.Util.escapeMarkdown(string).replace(/:/g, '\\$&')
     }
     responseQuestion(user) {
         var isAnswer = (reaction) => { // TODO move to static method
