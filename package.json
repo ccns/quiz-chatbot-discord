@@ -1,6 +1,6 @@
 {
   "name": "quiz-chatbot-discord",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "ccns quiz event chatbot for discord",
   "main": "index.js",
   "scripts": {
